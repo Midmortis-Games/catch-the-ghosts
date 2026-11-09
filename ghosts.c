@@ -1,0 +1,272 @@
+#pragma once
+
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "common.h"
+#include "raylib.h"
+#include "raymath.h"
+#include "timer.h"
+
+#define GHOST_POOL_SIZE 16
+#define GHOST_HITBOX_SIZE (Vector2){ 64, 59 }
+#define GHOST_HITBOX_OFFSET (Vector2){ -31, -65 }
+#define GHOST_HITBOX_COLOR PURPLE
+#define GHOST_SPRITE_OFFSET (Vector2){ -42, -172 }
+#define GHOST_RESPAWN_TIME (3)
+#define GHOST_SPAWN_POSITION_THRESHOLD (50)
+#define GHOST_SPAWN_Y_POSITION (-10)
+#define GHOST_MIN_SPEED (100)
+#define GHOST_MAX_SPEED (300)
+#define GHOST_DIRECTION (Vector2){ 0, 1 }
+#define GHOST_TEXTURE_PATH ASSETS_DIR "/ghost.png"
+
+_Static_assert(
+	LOCAL_WIDTH > GHOST_SPAWN_POSITION_THRESHOLD * 4 + 1,
+	"No place to spawn ghosts, make GHOST_SPAWN_POSITION_THRESHOLD smaller"
+);
+
+struct Ghost {
+	Vector2 position;
+	Vector2 direction;
+	float speed;
+};
+
+Texture2D ghostTexture;
+struct Ghost ghostPool[GHOST_POOL_SIZE];
+struct Ghost *ghostFreeList[GHOST_POOL_SIZE];
+bool ghostUsedList[GHOST_POOL_SIZE];
+int ghostFreeCount;
+
+struct Timer ghostRespawnTimer;
+
+void ghostPoolFree(struct Ghost *ghost);
+struct Ghost *ghostPoolAlloc(void);
+
+void ghostMap(
+	void (*callback)(struct Ghost *ghost, void *data, size_t size),
+	void *data,
+	size_t size
+) {
+	for (size_t i = 0; i < ARRAY_SIZE(ghostUsedList); i++) {
+		if (ghostUsedList[i]) {
+			callback(&ghostPool[i], data, size);
+		}
+	}
+}
+
+struct CollisionBox ghostGetCollisionBox(struct Ghost *ghost)
+{
+	return (struct CollisionBox){
+		.pos = {
+			ghost->position.x + GHOST_HITBOX_OFFSET.x,
+			ghost->position.y + GHOST_HITBOX_OFFSET.y
+		},
+		.width = GHOST_HITBOX_SIZE.x,
+		.height = GHOST_HITBOX_SIZE.y
+	};
+}
+
+void ghostKill(struct Ghost *ghost) {
+	assert(ghost != NULL);
+
+	if (ghost == NULL) {
+		errorf("Null exception, skipping killing ghost");
+		return;
+	}
+
+	ghostPoolFree(ghost);
+}
+
+void ghostTouched(struct Ghost *ghost, void *data, size_t size)
+{
+	assert(ghost != NULL);
+	assert(data != NULL);
+	assert(size == sizeof(struct CollisionTest));
+
+	if (ghost == NULL || data == NULL) {
+		errorf("Null exception, skipping ghost collision");
+		return;
+	}
+	if (size != sizeof(struct CollisionTest)) {
+		errorf("Expected payload size %zu: got %zu", sizeof(float), size);
+		return;
+	}
+
+	struct CollisionTest *ct = (struct CollisionTest *)data;
+	struct CollisionBox gc = ghostGetCollisionBox(ghost);
+
+	if (collisionBoxesOverlap(gc, ct->test)) {
+		ct->result = true;
+		ghostKill(ghost);
+	}
+}
+
+void ghostDraw(struct Ghost *ghost, void *data, size_t size)
+{
+	(void)data;
+	(void)size;
+
+	assert(IsWindowReady());
+	assert(ghost != NULL);
+
+	if (!IsWindowReady()) {
+		errorf("Window not ready, not drawing ghost");
+		return;
+	}
+
+	if (ghost == NULL) {
+		errorf("Ghost is null, ignoring");
+		return;
+	}
+
+	DrawTexture(
+		ghostTexture,
+		ghost->position.x + GHOST_SPRITE_OFFSET.x,
+		ghost->position.y + GHOST_SPRITE_OFFSET.y,
+		WHITE
+	);
+
+	if (showDebug) {
+		struct CollisionBox b = ghostGetCollisionBox(ghost);
+		DrawRectangle(
+			b.pos.x,
+			b.pos.y,
+			b.width,
+			b.height,
+			GHOST_HITBOX_COLOR
+		);
+		DrawCircleV(
+			ghost->position,
+			DEBUG_POSITION_RADIUS,
+			DEBUG_POSITION_COLOR
+		);
+	}
+}
+
+void drawGhosts(void)
+{
+	ghostMap(ghostDraw, NULL, 0);
+}
+
+int getGhostSpawnXPosition(void)
+{
+	static int previousSpawnPosition = -1;
+	const int threshold = GHOST_SPAWN_POSITION_THRESHOLD;
+
+	int rand = GetRandomValue(
+		threshold,
+		LOCAL_WIDTH - threshold
+	);
+
+	if (previousSpawnPosition < 0) {
+		previousSpawnPosition = rand;
+		return rand;
+	}
+
+	if (abs(rand - previousSpawnPosition) > threshold) {
+		previousSpawnPosition = rand;
+		return rand;
+	}
+
+	int tryRight = GetRandomValue(0, RAND_MAX) % 2 == 0;
+
+	if ((tryRight && rand + threshold > LOCAL_WIDTH - threshold)
+			|| (!tryRight && rand - threshold < threshold)) {
+		tryRight = !tryRight;
+	}
+
+	if (tryRight) {
+		rand = GetRandomValue(rand + threshold, LOCAL_WIDTH - threshold);
+	} else {
+		rand = GetRandomValue(threshold, rand - threshold);
+	}
+
+	previousSpawnPosition = rand;
+	return rand;
+}
+
+struct Ghost *ghostPoolAlloc(void)
+{
+	assert(ghostFreeCount > 0);
+	ghostFreeCount--;
+	struct Ghost *ghost = ghostFreeList[ghostFreeCount];
+	ghostUsedList[ghost - ghostPool] = true;
+	memset(ghost, 0, sizeof(struct Ghost));
+	return ghost;
+}
+
+void ghostPoolFree(struct Ghost *ghost)
+{
+	assert(ghost != NULL);
+	assert(ghostFreeCount < GHOST_POOL_SIZE);
+	assert(ghost >= &ghostPool[0]
+		&& ghost <= &ghostPool[GHOST_POOL_SIZE - 1]);
+
+	size_t idx = ghost - ghostPool;
+	assert(ghostUsedList[idx]); /* Double free */
+
+	/* Double free, no-op in release */
+	if (!ghostUsedList[idx]) {
+		return;
+	}
+
+	ghostUsedList[idx] = false;
+	ghostFreeList[ghostFreeCount] = ghost;
+	ghostFreeCount++;
+}
+
+void spawnGhost(void)
+{
+	if (ghostFreeCount <= 0) {
+		errorf("Warning: no free ghost slot to use");
+		return;
+	}
+
+	struct Ghost *ghost = ghostPoolAlloc();
+	ghost->speed = GetRandomValue(GHOST_MIN_SPEED, GHOST_MAX_SPEED);
+	ghost->direction = GHOST_DIRECTION;
+	ghost->position = (Vector2) {
+		getGhostSpawnXPosition(),
+		GHOST_SPAWN_Y_POSITION
+	};
+}
+
+void ghostPoolInit(void)
+{
+	for (int i = 0; i < GHOST_POOL_SIZE; i++) {
+		ghostFreeList[i] = &ghostPool[i];
+	}
+	ghostFreeCount = GHOST_POOL_SIZE;
+}
+
+__attribute__((constructor))
+void ghostLogicInit(void)
+{
+	ghostPoolInit();
+	ghostRespawnTimer = createTimer(GHOST_RESPAWN_TIME, spawnGhost, true);
+}
+
+void ghostMove(struct Ghost *ghost, void *data, size_t size)
+{
+	assert(size == sizeof(float));
+
+	if (size != sizeof(float)) {
+		errorf("Expected payload size %zu: got %zu", sizeof(float), size);
+		return;
+	}
+
+	float delta = *(float*)data;
+
+	ghost->position = Vector2Add(
+		ghost->position,
+		Vector2Scale(ghost->direction, ghost->speed * delta)
+	);
+}
+
+void updateGhostLogic(float delta)
+{
+	processTimer(&ghostRespawnTimer, delta);
+	ghostMap(ghostMove, &delta, sizeof(float));
+}
