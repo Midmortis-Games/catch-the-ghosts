@@ -5,6 +5,7 @@
 #include "raylib.h"
 #include "common.h"
 
+#include "start_screen.c"
 #include "ghosts.c"
 #include "timer.c"
 
@@ -19,11 +20,12 @@
 #define SPLASH_TEXTURE_PATH ASSETS_DIR "/splash.png"
 #define FONT_PATH ASSETS_DIR "/LakkiReddy-Regular.ttf"
 
-#define BACKGROUND_COLOR CLITERAL(Color){ 128, 128, 128, 255 }
 #define CANVAS_HTML_ID "#game"
 
 #define FONT_SIZE_DEBUG 48
-#define FONT_SIZE_SCORE (48 * 2)
+#define FONT_SIZE_SCORE 96
+#define FONT_SIZE_TITLE 192
+#define FONT_SIZE_SUBTITLE 96
 #define FONT_SPACING -1
 
 #define BUCKET_HITBOX_SIZE (Vector2){ 157, 33 }
@@ -36,6 +38,8 @@
 #define PLAYER_Y_POSITION (600)
 #define FLOOR_HITBOX_SIZE (Vector2){ LOCAL_WIDTH, 10 }
 #define FLOOR_HITBOX_POSITION (Vector2){ 0, LOCAL_HEIGHT }
+#define MAX_PLAYER_HEALTH 5
+#define MIN_PLAYER_HEALTH 0 /* dead when reached */
 
 struct Player {
 	Vector2 position;
@@ -46,9 +50,11 @@ bool showDebug = false;
 RenderTexture2D target;
 Texture2D playerTexture;
 extern Texture2D ghostTexture;
+extern bool inStartScreen;
 Texture2D splashTexture;
 Font font;
 unsigned int score;
+unsigned int health = MAX_PLAYER_HEALTH;
 
 void update(void);
 
@@ -57,7 +63,7 @@ void loadAssets(void)
 	playerTexture = LoadTexture(PLAYER_TEXTURE_PATH);
 	ghostTexture = LoadTexture(GHOST_TEXTURE_PATH);
 	splashTexture = LoadTexture(SPLASH_TEXTURE_PATH);
-	font = LoadFontEx(FONT_PATH, FONT_SIZE_SCORE, NULL, 0);
+	font = LoadFontEx(FONT_PATH, FONT_SIZE_TITLE, NULL, 0);
 
 	assert(IsTextureValid(playerTexture));
 	assert(IsTextureValid(ghostTexture));
@@ -104,8 +110,16 @@ void caughtGhost(void)
 	score++;
 }
 
+void died(void)
+{
+}
+
 void hitByGhost(void)
 {
+	health--;
+	if (health <= MIN_PLAYER_HEALTH) {
+		died();
+	}
 }
 
 struct CollisionBox getBucketCollisionBox(void)
@@ -270,9 +284,9 @@ void drawPlayer(void)
 	}
 }
 
-int MeasureTextMidmortis(const char *text, float fontSize)
+Vector2 MeasureTextMidmortis(const char *text, float fontSize)
 {
-	return MeasureTextEx(font, text, fontSize, FONT_SPACING).x;
+	return MeasureTextEx(font, text, fontSize, FONT_SPACING);
 }
 
 void DrawTextMidmortis(
@@ -313,7 +327,7 @@ void drawUI(void)
 
 	char scoreText[32] = { 0 };
 	snprintf(scoreText, ARRAY_SIZE(scoreText), "Score: %u", score);
-	int textSize = MeasureTextMidmortis(scoreText, FONT_SIZE_SCORE);
+	int textSize = MeasureTextMidmortis(scoreText, FONT_SIZE_SCORE).x;
 	int x = LOCAL_WIDTH / 2 - textSize / 2;
 	int y = FONT_SIZE_SCORE + 10;
 	DrawTextMidmortis(scoreText, x, y, FONT_SIZE_SCORE, LIGHTGRAY);
@@ -329,7 +343,7 @@ void drawViewport(void)
 	drawUI();
 }
 
-void update(void)
+void updateGame()
 {
 	updateLogic();
 
@@ -338,6 +352,45 @@ void update(void)
 		drawViewport();
 	}
 	EndTextureMode();
+}
+
+void updateDeathScreen(void)
+{
+	static bool drawn = false;
+
+	if (drawn) {
+		return;
+	}
+
+	BeginTextureMode(target);
+	{
+		char *diedText = "You Died!";
+		char *subText = "How does it feel to get ghosted?";
+		Vector2 diedSize = MeasureTextMidmortis(diedText, FONT_SIZE_TITLE);
+		int subSize = MeasureTextMidmortis(subText, FONT_SIZE_SUBTITLE).x;
+		int diedX = LOCAL_WIDTH / 2 - (int)diedSize.x / 2;
+		int diedY = LOCAL_HEIGHT / 2 - (int)(diedSize.y / 1.5);
+		int subX = LOCAL_WIDTH / 2 - subSize / 2;
+		int subY = LOCAL_HEIGHT / 2;
+		DrawTextMidmortis(diedText, diedX, diedY, FONT_SIZE_TITLE, LIGHTGRAY);
+		DrawTextMidmortis(subText, subX, subY, FONT_SIZE_SUBTITLE, LIGHTGRAY);
+	}
+	EndTextureMode();
+
+	drawn = true;
+}
+
+void update(void)
+{
+	static int lmao = 0;
+	if (inStartScreen) {
+		updateStartScreen();
+	} else if (health > MIN_PLAYER_HEALTH && lmao < 2) {
+		updateGame();
+		lmao++;
+	} else {
+		updateDeathScreen();
+	}
 
 	BeginDrawing();
 	{

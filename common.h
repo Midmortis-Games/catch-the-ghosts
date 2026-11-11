@@ -6,6 +6,7 @@
 
 #define LOCAL_WIDTH 1000
 #define LOCAL_HEIGHT 750
+#define BACKGROUND_COLOR CLITERAL(Color){ 128, 128, 128, 255 }
 
 #ifdef NDEBUG
 #define DEBUG_BUILD false
