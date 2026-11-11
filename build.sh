@@ -62,7 +62,7 @@ emcc -MJ compile_commands.part -c $SOURCE.c $FLAGS &&
 	(echo '['; cat compile_commands.part; echo ']') > compile_commands.json &&
 	    rm compile_commands.part
 
-	emcc -o build/game.html $SOURCE.o libraylib.a \
+	emcc -o build/index.html $SOURCE.o libraylib.a \
 	     $FLAGS \
 	     --shell-file shell.html \
 	     -s USE_GLFW=3 \
