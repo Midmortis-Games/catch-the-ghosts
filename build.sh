@@ -51,21 +51,26 @@ FLAGS="\
 	-std=gnu17 \
 	-I $EM_HEADER_DIR"
 
+
+if $DEBUG_BUILD; then
+    FLAGS+=" \
+	-g \
+	-O0 "
+else
+    FLAGS+=" \
+	-Os \
+	-DNDEBUG "
+fi
+
 mkdir -p build ||
     exit 1
 
 emcc -MJ compile_commands.part -c $SOURCE.c $FLAGS &&
     {
 	if $DEBUG_BUILD; then
-	    FLAGS+=" \
-		-g \
-		-O0 \
-		-sASSERTIONS=2"
+	    FLAGS+=" -sASSERTIONS=2 "
 	else
-	    FLAGS+=" \
-		-Os \
-		-sASSERTIONS=0 \
-		-DNDEBUG"
+	    FLAGS+=" -sASSERTIONS=0 "
 	fi
 
 	(echo '['; cat compile_commands.part; echo ']') > compile_commands.json &&
