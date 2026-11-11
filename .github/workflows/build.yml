@@ -1,0 +1,80 @@
+name: Build and Deploy
+
+on:
+  workflow_dispatch:
+
+env:
+  EMSDK_COMMIT: d7b4130688bfa348392b921ab04015aa15c4f154
+  RAYLIB_COMMIT: 4bfb72d8ff46b74ec8e5c745364406c4f153929f
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      # --- emsdk (build.sh expects it at ~/.local/share/emsdk) ---
+      - name: Cache emsdk
+        id: emsdk-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/emsdk
+          key: emsdk-${{ env.EMSDK_COMMIT }}
+
+      - name: Install emsdk
+        if: steps.emsdk-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/emscripten-core/emsdk.git ~/.local/share/emsdk
+          cd ~/.local/share/emsdk
+          git checkout "$EMSDK_COMMIT"
+          ./emsdk install latest
+          ./emsdk activate latest
+
+      # --- libraylib.a (depends on both raylib AND the compiler) ---
+      - name: Cache libraylib.a
+        id: raylib-cache
+        uses: actions/cache@v4
+        with:
+          path: libraylib.a
+          key: libraylib-${{ env.RAYLIB_COMMIT }}-${{ env.EMSDK_COMMIT }}
+
+      - name: Build raylib for web
+        if: steps.raylib-cache.outputs.cache-hit != 'true'
+        run: |
+          source ~/.local/share/emsdk/emsdk_env.sh
+          git clone https://github.com/raysan5/raylib.git "$RUNNER_TEMP/raylib"
+          cd "$RUNNER_TEMP/raylib"
+          git checkout "$RAYLIB_COMMIT"
+          cd src
+          emcc -c rcore.c -Os -Wall -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES2
+          emcc -c rshapes.c -Os -Wall -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES2
+          emcc -c rtextures.c -Os -Wall -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES2
+          emcc -c rtext.c -Os -Wall -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES2
+          emcc -c rmodels.c -Os -Wall -DPLATFORM_WEB -DGRAPHICS_API_OPENGL_ES2
+          emcc -c raudio.c -Os -Wall -DPLATFORM_WEB
+          emar rcs libraylib.a rcore.o rshapes.o rtextures.o rtext.o rmodels.o raudio.o
+          cp libraylib.a "$GITHUB_WORKSPACE/libraylib.a"
+
+      - name: Build game
+        run: |
+          bash build.sh --release
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

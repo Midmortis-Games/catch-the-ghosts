@@ -27,7 +27,16 @@ if $HELP; then
     exit 0
 fi
 
-EM_HEADER_DIR="$HOME/.local/share/emsdk/upstream/emscripten/cache/sysroot/include/"
+EMSDK_DIR="$HOME/.local/share/emsdk"
+
+if [ ! -f "$EMSDK_DIR/emsdk_env.sh" ]; then
+  echo "error: emsdk not found at $EMSDK_DIR" >&2
+  exit 1
+fi
+
+EMSDK_QUIET=1 source "$EMSDK_DIR/emsdk_env.sh"
+
+EM_HEADER_DIR="$EMSDK_DIR/upstream/emscripten/cache/sysroot/include/"
 
 if [ ! -d "$EM_HEADER_DIR" ]; then
   echo "error: emscripten is not installed properly" >&2
