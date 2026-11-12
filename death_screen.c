@@ -42,7 +42,7 @@ void drawDeathScreenUI(void)
         Vector2 position = GetMousePosition();
         bool isHovering = CheckCollisionPointRec(position, playButton);
 	if (isHovering) {
-		playColor = GRAY;
+		playColor = DARKGRAY;
 		SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
 
 		if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {

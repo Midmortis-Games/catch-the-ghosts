@@ -7,7 +7,8 @@
 #include "common.h"
 #include "raylib.h"
 #include "raymath.h"
-#include "timer.h"
+
+#include "timer.c"
 
 #define GHOST_POOL_SIZE 16
 #define GHOST_HITBOX_SIZE ((Vector2){ 64, 59 })
@@ -244,7 +245,7 @@ __attribute__((constructor))
 void ghostLogicInit(void)
 {
 	ghostPoolInit();
-	ghostRespawnTimer = createTimer(GHOST_RESPAWN_TIME, spawnGhost, true);
+	ghostRespawnTimer = timerCreate(GHOST_RESPAWN_TIME, spawnGhost, true);
 }
 
 void ghostMove(struct Ghost *ghost, void *data, size_t size)
@@ -266,7 +267,7 @@ void ghostMove(struct Ghost *ghost, void *data, size_t size)
 
 void updateGhostLogic(float delta)
 {
-	processTimer(&ghostRespawnTimer, delta);
+	timerProcess(&ghostRespawnTimer, delta);
 	ghostMap(ghostMove, &delta, sizeof(float));
 }
 

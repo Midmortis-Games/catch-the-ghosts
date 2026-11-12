@@ -58,3 +58,4 @@ dkms.conf
 # Clangd
 /.cache
 /compile_commands.json
+/compile_commands.part

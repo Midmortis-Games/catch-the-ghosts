@@ -28,7 +28,7 @@ void drawDebugGameplayUI(void)
 	DrawTextMidmortis(fps, 0, FONT_SIZE_DEBUG, FONT_SIZE_DEBUG, LIGHTGRAY);
 }
 
-void drawGameplayUI(void)
+void gameplayDrawUI(void)
 {
 	if (DEBUG_BUILD) {
 		drawDebugGameplayUI();
@@ -42,14 +42,14 @@ void drawGameplayUI(void)
 	DrawTextMidmortis(scoreText, x, y, FONT_SIZE_SCORE, LIGHTGRAY);
 }
 
-void drawGameplay(void)
+void gameplayDraw(void)
 {
 	ClearBackground(BACKGROUND_COLOR);
 
 	drawGhosts();
 	drawPlayer();
 
-	drawGameplayUI();
+	gameplayDrawUI();
 }
 
 void gameplayDied(void)
@@ -114,6 +114,7 @@ void stateEnterGameplay(void)
 {
 	currentState = STATE_GAMEPLAY;
 
+	timerReset(&ghostRespawnTimer);
 	playerReset();
 	player.died = gameplayDied;
 	PlayMusicStream(music);
@@ -130,7 +131,7 @@ void stateProcessGameplay(void)
 
 	BeginTextureMode(target);
 	{
-		drawGameplay();
+		gameplayDraw();
 	}
 	EndTextureMode();
 }

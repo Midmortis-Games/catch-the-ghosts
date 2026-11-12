@@ -4,6 +4,7 @@
 
 #include "raylib.h"
 #include "raymath.h"
+#include "rlgl.h"
 
 #define LOCAL_WIDTH 1000
 #define LOCAL_HEIGHT 750

@@ -2,11 +2,18 @@
 
 #include <assert.h>
 #include <math.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
-#include "timer.h"
+struct Timer {
+	void (*callback)(void);
+	float waitTime;
+	float timeLeft;
+	bool looping;
+	bool finished;
+};
 
-struct Timer createTimer(float timeout, void (*callback)(void), bool looping)
+struct Timer timerCreate(float timeout, void (*callback)(void), bool looping)
 {
 	assert(isfinite(timeout));
 	assert(timeout > 0.0f);
@@ -21,7 +28,18 @@ struct Timer createTimer(float timeout, void (*callback)(void), bool looping)
 	return timer;
 }
 
-void processTimer(struct Timer *timer, float delta)
+void timerReset(struct Timer *timer)
+{
+	timer->timeLeft = timer->waitTime;
+}
+
+void timerRestart(struct Timer *timer)
+{
+	timerReset(timer);
+	timer->finished = false;
+}
+
+void timerProcess(struct Timer *timer, float delta)
 {
 	assert(timer != NULL);
 	assert(isfinite(delta));

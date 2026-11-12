@@ -184,7 +184,13 @@ void update(void)
 
 	BeginDrawing();
 	{
-		showViewport();
+		/* Because we use targets drawn on the viewport, the alpha is
+		 * blended twice. So, disabling alpha blending here*/
+		BeginBlendMode(BLEND_ALPHA_PREMULTIPLY);
+		{
+			showViewport();
+		}
+		EndBlendMode();
 	}
 	EndDrawing();
 }
@@ -202,8 +208,6 @@ int errorf(const char *restrict format, ...)
 
 void DrawRenderTexture(RenderTexture2D tex)
 {
-	ClearBackground(BACKGROUND_COLOR);
-
 	DrawTextureRec(
 		tex.texture,
 		(Rectangle){
