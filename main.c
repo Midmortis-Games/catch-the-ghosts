@@ -6,8 +6,12 @@
 #include "common.h"
 
 #include "start_screen.c"
+#include "death_screen.c"
+#include "gameplay_screen.c"
+#include "player.c"
 #include "ghosts.c"
 #include "timer.c"
+#include "game_state.c"
 
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
@@ -22,50 +26,22 @@
 
 #define CANVAS_HTML_ID "#game"
 
-#define FONT_SIZE_DEBUG 48
-#define FONT_SIZE_SCORE 96
-#define FONT_SIZE_TITLE 192
-#define FONT_SIZE_SUBTITLE 96
-#define FONT_SPACING -1
-
-#define BUCKET_HITBOX_SIZE (Vector2){ 157, 33 }
-#define BUCKET_HITBOX_OFFSET (Vector2){ -185, -118 }
-#define BUCKET_HITBOX_COLOR GREEN
-#define PLAYER_SPRITE_OFFSET (Vector2){ -225, -154 }
-#define PLAYER_HITBOX_SIZE (Vector2){ 349, 231 }
-#define PLAYER_HITBOX_OFFSET (Vector2){ -173, -79 }
-#define PLAYER_HITBOX_COLOR SKYBLUE
-#define PLAYER_Y_POSITION (600)
-#define FLOOR_HITBOX_SIZE (Vector2){ LOCAL_WIDTH, 10 }
-#define FLOOR_HITBOX_POSITION (Vector2){ 0, LOCAL_HEIGHT }
-#define MAX_PLAYER_HEALTH 5
-#define MIN_PLAYER_HEALTH 0 /* dead when reached */
-
-struct Player {
-	Vector2 position;
-} player;
-
 bool showDebug = false;
 
 RenderTexture2D target;
-Texture2D playerTexture;
-extern Texture2D ghostTexture;
-extern bool inStartScreen;
 Texture2D splashTexture;
 Font font;
-unsigned int score;
-unsigned int health = MAX_PLAYER_HEALTH;
 
 void update(void);
 
 void loadAssets(void)
 {
-	playerTexture = LoadTexture(PLAYER_TEXTURE_PATH);
+	player.texture = LoadTexture(PLAYER_TEXTURE_PATH);
 	ghostTexture = LoadTexture(GHOST_TEXTURE_PATH);
 	splashTexture = LoadTexture(SPLASH_TEXTURE_PATH);
 	font = LoadFontEx(FONT_PATH, FONT_SIZE_TITLE, NULL, 0);
 
-	assert(IsTextureValid(playerTexture));
+	assert(IsTextureValid(player.texture));
 	assert(IsTextureValid(ghostTexture));
 	assert(IsTextureValid(splashTexture));
 	assert(IsFontValid(font));
@@ -78,6 +54,10 @@ void createRenderTexture(void)
 	target = LoadRenderTexture(LOCAL_WIDTH, LOCAL_HEIGHT);
 	assert(IsRenderTextureValid(target));
 	SetTextureFilter(target.texture, TEXTURE_FILTER_BILINEAR);
+
+	targetBackup = LoadRenderTexture(LOCAL_WIDTH, LOCAL_HEIGHT);
+	assert(IsRenderTextureValid(targetBackup));
+	SetTextureFilter(targetBackup.texture, TEXTURE_FILTER_BILINEAR);
 }
 
 int main(void)
@@ -93,117 +73,7 @@ int main(void)
 	loadAssets();
 	createRenderTexture();
 
-	SetTargetFPS(60);
 	emscripten_set_main_loop(update, 0, true);
-}
-
-void updatePlayerLogic(float delta)
-{
-	(void)delta;
-
-	player.position.y = PLAYER_Y_POSITION;
-	player.position.x = GetMouseX();
-}
-
-void caughtGhost(void)
-{
-	score++;
-}
-
-void died(void)
-{
-}
-
-void hitByGhost(void)
-{
-	health--;
-	if (health <= MIN_PLAYER_HEALTH) {
-		died();
-	}
-}
-
-struct CollisionBox getBucketCollisionBox(void)
-{
-	return (struct CollisionBox){
-		.pos = Vector2Add(player.position, BUCKET_HITBOX_OFFSET),
-		.width = BUCKET_HITBOX_SIZE.x,
-		.height = BUCKET_HITBOX_SIZE.y,
-	};
-}
-
-struct CollisionBox getPlayerCollisionBox(void)
-{
-	return (struct CollisionBox){
-		.pos = Vector2Add(player.position, PLAYER_HITBOX_OFFSET),
-		.width = PLAYER_HITBOX_SIZE.x,
-		.height = PLAYER_HITBOX_SIZE.y,
-	};
-}
-
-struct CollisionBox getFloorCollisionBox(void)
-{
-	return (struct CollisionBox){
-		.pos = FLOOR_HITBOX_POSITION,
-		.width = FLOOR_HITBOX_SIZE.x,
-		.height = FLOOR_HITBOX_SIZE.y
-	};
-}
-
-void updatePhysicsFloor(void)
-{
-	struct CollisionBox floor = getFloorCollisionBox();
-	struct CollisionTest ct = { .test = floor };
-	/* Just kill the ghosts */
-	ghostMap(ghostTouched, &ct, sizeof(struct CollisionTest));
-}
-
-void updatePhysicsBucket(void)
-{
-	struct CollisionBox bucket = getBucketCollisionBox();
-	struct CollisionTest ct = { .test = bucket };
-	ghostMap(ghostTouched, &ct, sizeof(struct CollisionTest));
-	if (ct.result) {
-		/* Can only catch one ghost per frame */
-		caughtGhost();
-	}
-}
-
-void updatePhysicsPlayer(void)
-{
-	struct CollisionBox player = getPlayerCollisionBox();
-	struct CollisionTest ct = { .test = player };
-	ghostMap(ghostTouched, &ct, sizeof(struct CollisionTest));
-	if (ct.result) {
-		/* Can only get hit once per frame */
-		hitByGhost();
-	}
-}
-
-void updatePhysics(float delta)
-{
-	(void)delta;
-
-	updatePhysicsBucket();
-	updatePhysicsPlayer();
-	updatePhysicsFloor();
-}
-
-void updateLogic(void)
-{
-	float delta = GetFrameTime();
-	assert(isfinite(delta));
-
-	if (DEBUG_BUILD && IsKeyPressed(KEY_D)) {
-		showDebug = !showDebug;
-	}
-
-	if (delta == 0.0f) {
-		return;
-	}
-
-	updatePlayerLogic(delta);
-	updateGhostLogic(delta);
-	updatePhysics(delta);
 }
 
 void resizeWindow(int width, int height)
@@ -252,37 +122,6 @@ void showViewport(void)
 	);
 }
 
-void drawPlayer(void)
-{
-	DrawTexture(
-		playerTexture,
-		player.position.x + PLAYER_SPRITE_OFFSET.x,
-		player.position.y + PLAYER_SPRITE_OFFSET.y,
-		WHITE
-	);
-
-	if (showDebug) {
-		DrawRectangle(
-			player.position.x + PLAYER_HITBOX_OFFSET.x,
-			player.position.y + PLAYER_HITBOX_OFFSET.y,
-			PLAYER_HITBOX_SIZE.x,
-			PLAYER_HITBOX_SIZE.y,
-			PLAYER_HITBOX_COLOR
-		);
-		DrawRectangle(
-			player.position.x + BUCKET_HITBOX_OFFSET.x,
-			player.position.y + BUCKET_HITBOX_OFFSET.y,
-			BUCKET_HITBOX_SIZE.x,
-			BUCKET_HITBOX_SIZE.y,
-			BUCKET_HITBOX_COLOR
-		);
-		DrawCircleV(
-			player.position,
-			DEBUG_POSITION_RADIUS,
-			DEBUG_POSITION_COLOR
-		);
-	}
-}
 
 Vector2 MeasureTextMidmortis(const char *text, float fontSize)
 {
@@ -306,91 +145,9 @@ void DrawTextMidmortis(
 	);
 }
 
-void drawDebugUI(void) {
-	char fps[32] = { 0 };
-	snprintf(fps, ARRAY_SIZE(fps), "%d FPS", GetFPS());
-	DrawTextMidmortis(
-		"Press D to show debug collisions",
-		0,
-		0,
-		FONT_SIZE_DEBUG,
-		LIGHTGRAY
-	);
-	DrawTextMidmortis(fps, 0, FONT_SIZE_DEBUG, FONT_SIZE_DEBUG, LIGHTGRAY);
-}
-
-void drawUI(void)
-{
-	if (DEBUG_BUILD) {
-		drawDebugUI();
-	}
-
-	char scoreText[32] = { 0 };
-	snprintf(scoreText, ARRAY_SIZE(scoreText), "Score: %u", score);
-	int textSize = MeasureTextMidmortis(scoreText, FONT_SIZE_SCORE).x;
-	int x = LOCAL_WIDTH / 2 - textSize / 2;
-	int y = FONT_SIZE_SCORE + 10;
-	DrawTextMidmortis(scoreText, x, y, FONT_SIZE_SCORE, LIGHTGRAY);
-}
-
-void drawViewport(void)
-{
-	ClearBackground(BACKGROUND_COLOR);
-
-	drawGhosts();
-	drawPlayer();
-
-	drawUI();
-}
-
-void updateGame()
-{
-	updateLogic();
-
-	BeginTextureMode(target);
-	{
-		drawViewport();
-	}
-	EndTextureMode();
-}
-
-void updateDeathScreen(void)
-{
-	static bool drawn = false;
-
-	if (drawn) {
-		return;
-	}
-
-	BeginTextureMode(target);
-	{
-		char *diedText = "You Died!";
-		char *subText = "How does it feel to get ghosted?";
-		Vector2 diedSize = MeasureTextMidmortis(diedText, FONT_SIZE_TITLE);
-		int subSize = MeasureTextMidmortis(subText, FONT_SIZE_SUBTITLE).x;
-		int diedX = LOCAL_WIDTH / 2 - (int)diedSize.x / 2;
-		int diedY = LOCAL_HEIGHT / 2 - (int)(diedSize.y / 1.5);
-		int subX = LOCAL_WIDTH / 2 - subSize / 2;
-		int subY = LOCAL_HEIGHT / 2;
-		DrawTextMidmortis(diedText, diedX, diedY, FONT_SIZE_TITLE, LIGHTGRAY);
-		DrawTextMidmortis(subText, subX, subY, FONT_SIZE_SUBTITLE, LIGHTGRAY);
-	}
-	EndTextureMode();
-
-	drawn = true;
-}
-
 void update(void)
 {
-	static int lmao = 0;
-	if (inStartScreen) {
-		updateStartScreen();
-	} else if (health > MIN_PLAYER_HEALTH && lmao < 2) {
-		updateGame();
-		lmao++;
-	} else {
-		updateDeathScreen();
-	}
+	stateUpdate();
 
 	BeginDrawing();
 	{
@@ -416,4 +173,21 @@ bool collisionBoxesOverlap(struct CollisionBox a, struct CollisionBox b)
 		&& a.pos.x + a.width  > b.pos.x
 		&& a.pos.y < b.pos.y + b.height
 		&& a.pos.y + a.height > b.pos.y;
+}
+
+void DrawRenderTexture(RenderTexture2D tex)
+{
+	ClearBackground(BACKGROUND_COLOR);
+
+	DrawTextureRec(
+		tex.texture,
+		(Rectangle){
+			0,
+			0,
+			(float)tex.texture.width,
+			-(float)tex.texture.height
+		},
+		(Vector2){ 0, 0 },
+		WHITE
+	);
 }

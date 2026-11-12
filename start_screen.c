@@ -1,15 +1,19 @@
 #pragma once
 
+#include <assert.h>
 #include <stdbool.h>
 
 #include "common.h"
-#include "raylib.h"
 
-extern RenderTexture2D target;
-bool inStartScreen = false;
-
-void updateStartScreen()
+void stateEnterStartScreen(void)
 {
+	currentState = STATE_START_SCREEN;
+}
+
+void stateProcessStartScreen(void)
+{
+	assert(currentState == STATE_START_SCREEN);
+
 	BeginTextureMode(target);
 	{
 		ClearBackground(BACKGROUND_COLOR);
@@ -17,3 +21,7 @@ void updateStartScreen()
 	EndTextureMode();
 }
 
+void stateExitStartScreen(void)
+{
+	assert(currentState == STATE_START_SCREEN);
+}
