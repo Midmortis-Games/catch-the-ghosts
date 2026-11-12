@@ -10,8 +10,7 @@ RenderTexture2D targetBackup;
 
 void pressRestartGame(void)
 {
-	stateExitDeath();
-	stateEnterGameplay();
+	stateChange(STATE_GAMEPLAY);
 }
 
 void drawDeathScreenUI(void)
@@ -59,8 +58,6 @@ void drawDeathScreenUI(void)
 
 void stateEnterDeath(void)
 {
-	currentState = STATE_DEATH;
-
 	BeginTextureMode(targetBackup);
 	{
 		DrawRenderTexture(target);

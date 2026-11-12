@@ -33,10 +33,11 @@
 	((int)sizeof(struct {_Static_assert(!(__builtin_types_compatible_p(typeof((arr)), typeof(&((arr))[0]))), "must be array");})))
 
 typedef enum STATE {
-	STATE_START,
+	_STATE_FIRST = 0, /* Not a valid state, MUST be first */
 	STATE_START_SCREEN,
 	STATE_GAMEPLAY,
-	STATE_DEATH
+	STATE_DEATH,
+	_STATE_LAST, /* Not a valid state, MUST be last */
 } STATE;
 
 struct CollisionTest {

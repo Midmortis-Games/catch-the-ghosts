@@ -9,8 +9,7 @@
 
 void pressStartGame(void)
 {
-	stateExitStartScreen();
-	stateEnterGameplay();
+	stateChange(STATE_GAMEPLAY);
 }
 
 void drawStartScreenUI(void)
@@ -52,10 +51,7 @@ void drawStartScreenUI(void)
 	DrawTextMidmortis(playText, playX, playY, FONT_SIZE_SUBTITLE, playColor);
 }
 
-void stateEnterStartScreen(void)
-{
-	currentState = STATE_START_SCREEN;
-}
+void stateEnterStartScreen(void) {}
 
 void stateProcessStartScreen(void)
 {

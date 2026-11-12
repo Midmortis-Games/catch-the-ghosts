@@ -60,8 +60,8 @@ void gameplayDraw(void)
 void gameplayDied(void)
 {
 	assert(currentState == STATE_GAMEPLAY);
-	stateExitGameplay();
-	stateEnterDeath();
+
+	stateChange(STATE_DEATH);
 }
 
 Rectangle getFloorCollisionBox(void)
@@ -117,8 +117,6 @@ void updateLogic(void)
 
 void stateEnterGameplay(void)
 {
-	currentState = STATE_GAMEPLAY;
-
 	timerReset(&ghostRespawnTimer);
 	playerReset();
 	player.died = gameplayDied;
