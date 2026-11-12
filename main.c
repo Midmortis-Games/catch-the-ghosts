@@ -23,6 +23,9 @@
 #define PLAYER_TEXTURE_PATH ASSETS_DIR "/player.png"
 #define SPLASH_TEXTURE_PATH ASSETS_DIR "/splash.png"
 #define FONT_PATH ASSETS_DIR "/LakkiReddy-Regular.ttf"
+#define MUSIC_PATH ASSETS_DIR "/music.ogg"
+#define SOUND_CATCH_GHOST_PATH ASSETS_DIR "/catch_ghost.ogg"
+#define SOUND_SPLASH_PATH ASSETS_DIR "/splash.ogg"
 
 #define CANVAS_HTML_ID "#game"
 
@@ -40,11 +43,17 @@ void loadAssets(void)
 	ghostTexture = LoadTexture(GHOST_TEXTURE_PATH);
 	splashTexture = LoadTexture(SPLASH_TEXTURE_PATH);
 	font = LoadFontEx(FONT_PATH, FONT_SIZE_TITLE, NULL, 0);
+	music = LoadMusicStream(MUSIC_PATH);
+	catchGhost = LoadSound(SOUND_CATCH_GHOST_PATH);
+	splash = LoadSound(SOUND_SPLASH_PATH);
 
 	assert(IsTextureValid(player.texture));
 	assert(IsTextureValid(ghostTexture));
 	assert(IsTextureValid(splashTexture));
 	assert(IsFontValid(font));
+	assert(IsMusicValid(music));
+	assert(IsSoundValid(catchGhost));
+	assert(IsSoundValid(splash));
 
 	SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
 }
@@ -165,14 +174,6 @@ int errorf(const char *restrict format, ...)
 
 	va_end(args);
 	return ret;
-}
-
-bool collisionBoxesOverlap(struct CollisionBox a, struct CollisionBox b)
-{
-	return a.pos.x < b.pos.x + b.width
-		&& a.pos.x + a.width  > b.pos.x
-		&& a.pos.y < b.pos.y + b.height
-		&& a.pos.y + a.height > b.pos.y;
 }
 
 void DrawRenderTexture(RenderTexture2D tex)

@@ -22,10 +22,10 @@ void stateUpdate(void)
 {
 	switch (currentState) {
 	case STATE_START:
-		stateEnterGameplay();
-		stateProcessGameplay();
-		/* stateEnterStartScreen(); */
-		/* stateProcessStartScreen(); */
+		/* stateEnterGameplay();
+		 * stateProcessGameplay(); */
+		stateEnterStartScreen();
+		stateProcessStartScreen();
 		break;
 	case STATE_START_SCREEN:
 		stateProcessStartScreen();

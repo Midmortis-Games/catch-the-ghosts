@@ -36,14 +36,8 @@ typedef enum STATE {
 	STATE_DEATH
 } STATE;
 
-struct CollisionBox {
-	Vector2 pos;
-	float width;
-	float height;
-};
-
 struct CollisionTest {
-	struct CollisionBox test;
+	Rectangle test;
 	bool result;
 };
 
@@ -52,7 +46,6 @@ extern STATE currentState;
 extern RenderTexture2D target;
 
 int errorf(const char *restrict format, ...);
-bool collisionBoxesOverlap(struct CollisionBox a, struct CollisionBox b);
 Vector2 MeasureTextMidmortis(const char *text, float fontSize);
 void DrawTextMidmortis(
 	const char *text,

@@ -38,6 +38,7 @@ struct Ghost ghostPool[GHOST_POOL_SIZE];
 struct Ghost *ghostFreeList[GHOST_POOL_SIZE];
 bool ghostUsedList[GHOST_POOL_SIZE];
 int ghostFreeCount;
+Sound splash;
 
 struct Timer ghostRespawnTimer;
 
@@ -56,13 +57,11 @@ void ghostMap(
 	}
 }
 
-struct CollisionBox ghostGetCollisionBox(struct Ghost *ghost)
+Rectangle ghostGetCollisionBox(struct Ghost *ghost)
 {
-	return (struct CollisionBox){
-		.pos = {
-			ghost->position.x + GHOST_HITBOX_OFFSET.x,
-			ghost->position.y + GHOST_HITBOX_OFFSET.y
-		},
+	return (Rectangle){
+		.x = ghost->position.x + GHOST_HITBOX_OFFSET.x,
+		.y = ghost->position.y + GHOST_HITBOX_OFFSET.y,
 		.width = GHOST_HITBOX_SIZE.x,
 		.height = GHOST_HITBOX_SIZE.y
 	};
@@ -95,9 +94,9 @@ void ghostTouched(struct Ghost *ghost, void *data, size_t size)
 	}
 
 	struct CollisionTest *ct = (struct CollisionTest *)data;
-	struct CollisionBox gc = ghostGetCollisionBox(ghost);
+	Rectangle gc = ghostGetCollisionBox(ghost);
 
-	if (collisionBoxesOverlap(gc, ct->test)) {
+	if (CheckCollisionRecs(gc, ct->test)) {
 		ct->result = true;
 		ghostKill(ghost);
 	}
@@ -129,10 +128,10 @@ void ghostDraw(struct Ghost *ghost, void *data, size_t size)
 	);
 
 	if (showDebug) {
-		struct CollisionBox b = ghostGetCollisionBox(ghost);
+		Rectangle b = ghostGetCollisionBox(ghost);
 		DrawRectangle(
-			b.pos.x,
-			b.pos.y,
+			b.x,
+			b.y,
 			b.width,
 			b.height,
 			GHOST_HITBOX_COLOR

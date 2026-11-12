@@ -12,7 +12,9 @@
 #define FLOOR_HITBOX_SIZE (Vector2){ LOCAL_WIDTH, 10 }
 #define FLOOR_HITBOX_POSITION (Vector2){ 0, LOCAL_HEIGHT }
 
-void drawDebugUI(void)
+Music music;
+
+void drawDebugGameplayUI(void)
 {
 	char fps[32] = { 0 };
 	snprintf(fps, ARRAY_SIZE(fps), "%d FPS", GetFPS());
@@ -26,10 +28,10 @@ void drawDebugUI(void)
 	DrawTextMidmortis(fps, 0, FONT_SIZE_DEBUG, FONT_SIZE_DEBUG, LIGHTGRAY);
 }
 
-void drawUI(void)
+void drawGameplayUI(void)
 {
 	if (DEBUG_BUILD) {
-		drawDebugUI();
+		drawDebugGameplayUI();
 	}
 
 	char scoreText[32] = { 0 };
@@ -47,7 +49,7 @@ void drawGameplay(void)
 	drawGhosts();
 	drawPlayer();
 
-	drawUI();
+	drawGameplayUI();
 }
 
 void gameplayDied(void)
@@ -57,10 +59,11 @@ void gameplayDied(void)
 	stateEnterDeath();
 }
 
-struct CollisionBox getFloorCollisionBox(void)
+Rectangle getFloorCollisionBox(void)
 {
-	return (struct CollisionBox){
-		.pos = FLOOR_HITBOX_POSITION,
+	return (Rectangle){
+		.x = FLOOR_HITBOX_POSITION.x,
+		.y = FLOOR_HITBOX_POSITION.y,
 		.width = FLOOR_HITBOX_SIZE.x,
 		.height = FLOOR_HITBOX_SIZE.y
 	};
@@ -68,10 +71,12 @@ struct CollisionBox getFloorCollisionBox(void)
 
 void updatePhysicsFloor(void)
 {
-	struct CollisionBox floor = getFloorCollisionBox();
+	Rectangle floor = getFloorCollisionBox();
 	struct CollisionTest ct = { .test = floor };
-	/* Just kill the ghosts */
 	ghostMap(ghostTouched, &ct, sizeof(struct CollisionTest));
+	if (ct.result) {
+		PlaySound(splash);
+	}
 }
 
 void updatePhysics(float delta)
@@ -104,7 +109,9 @@ void updateLogic(void)
 void stateEnterGameplay(void)
 {
 	currentState = STATE_GAMEPLAY;
+
 	player.died = gameplayDied;
+	PlayMusicStream(music);
 }
 
 void stateProcessGameplay(void)
@@ -112,6 +119,7 @@ void stateProcessGameplay(void)
 	assert(currentState == STATE_GAMEPLAY);
 
 	updateLogic();
+	UpdateMusicStream(music);
 
 	BeginTextureMode(target);
 	{
@@ -123,4 +131,6 @@ void stateProcessGameplay(void)
 void stateExitGameplay(void)
 {
 	assert(currentState == STATE_GAMEPLAY);
+
+	StopMusicStream(music);
 }

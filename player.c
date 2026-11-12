@@ -30,6 +30,8 @@ struct Player {
 	},
 };
 
+Sound catchGhost;
+
 void drawPlayer(void)
 {
 	DrawTexture(
@@ -73,6 +75,7 @@ void updatePlayerLogic(float delta)
 void caughtGhost(void)
 {
 	player.score++;
+	PlaySound(catchGhost);
 }
 
 void hitByGhost(void)
@@ -82,21 +85,26 @@ void hitByGhost(void)
 		assert(player.died != NULL);
 		player.died();
 	}
+	PlaySound(splash);
 }
 
-struct CollisionBox getBucketCollisionBox(void)
+Rectangle getBucketCollisionBox(void)
 {
-	return (struct CollisionBox){
-		.pos = Vector2Add(player.position, BUCKET_HITBOX_OFFSET),
+	Vector2 final = Vector2Add(player.position, BUCKET_HITBOX_OFFSET);
+	return (Rectangle){
+		.x = final.x,
+		.y = final.y,
 		.width = BUCKET_HITBOX_SIZE.x,
 		.height = BUCKET_HITBOX_SIZE.y,
 	};
 }
 
-struct CollisionBox getPlayerCollisionBox(void)
+Rectangle getPlayerCollisionBox(void)
 {
-	return (struct CollisionBox){
-		.pos = Vector2Add(player.position, PLAYER_HITBOX_OFFSET),
+	Vector2 final = Vector2Add(player.position, PLAYER_HITBOX_OFFSET);
+	return (Rectangle){
+		.x = final.x,
+		.y = final.y,
 		.width = PLAYER_HITBOX_SIZE.x,
 		.height = PLAYER_HITBOX_SIZE.y,
 	};
@@ -104,8 +112,8 @@ struct CollisionBox getPlayerCollisionBox(void)
 
 void updatePhysicsBucket(void)
 {
-	struct CollisionBox bucket = getBucketCollisionBox();
-	struct CollisionTest ct = { .test = bucket };
+	Rectangle bucketCollisionBox = getBucketCollisionBox();
+	struct CollisionTest ct = { .test = bucketCollisionBox };
 	ghostMap(ghostTouched, &ct, sizeof(struct CollisionTest));
 	if (ct.result) {
 		/* Can only catch one ghost per frame */
@@ -115,8 +123,8 @@ void updatePhysicsBucket(void)
 
 void updatePhysicsPlayer(void)
 {
-	struct CollisionBox player = getPlayerCollisionBox();
-	struct CollisionTest ct = { .test = player };
+	Rectangle playerCollisionBox = getPlayerCollisionBox();
+	struct CollisionTest ct = { .test = playerCollisionBox };
 	ghostMap(ghostTouched, &ct, sizeof(struct CollisionTest));
 	if (ct.result) {
 		/* Can only get hit once per frame */
