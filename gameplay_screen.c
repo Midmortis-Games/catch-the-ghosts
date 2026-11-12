@@ -30,6 +30,8 @@ void drawDebugGameplayUI(void)
 
 void gameplayDrawUI(void)
 {
+	static int x = -1;
+
 	if (DEBUG_BUILD) {
 		drawDebugGameplayUI();
 	}
@@ -37,7 +39,10 @@ void gameplayDrawUI(void)
 	char scoreText[32] = { 0 };
 	snprintf(scoreText, ARRAY_SIZE(scoreText), "Score: %u", player.score);
 	int textSize = MeasureTextMidmortis(scoreText, FONT_SIZE_SCORE).x;
-	int x = LOCAL_WIDTH / 2 - textSize / 2;
+	if (x < 0) {
+		x = LOCAL_WIDTH / 2 - textSize / 2;
+		assert(x >= 0);
+	}
 	int y = FONT_SIZE_SCORE + 10;
 	DrawTextMidmortis(scoreText, x, y, FONT_SIZE_SCORE, LIGHTGRAY);
 }
