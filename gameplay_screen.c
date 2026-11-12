@@ -9,8 +9,8 @@
 #include "player.c"
 #include "ghosts.c"
 
-#define FLOOR_HITBOX_SIZE (Vector2){ LOCAL_WIDTH, 10 }
-#define FLOOR_HITBOX_POSITION (Vector2){ 0, LOCAL_HEIGHT }
+#define FLOOR_HITBOX_SIZE ((Vector2){ LOCAL_WIDTH, 10 })
+#define FLOOR_HITBOX_POSITION ((Vector2){ 0, LOCAL_HEIGHT })
 
 Music music;
 
@@ -93,6 +93,10 @@ void updateLogic(void)
 	float delta = GetFrameTime();
 	assert(isfinite(delta));
 
+	if (delta > MAX_DELTA) {
+		delta = MAX_DELTA;
+	}
+
 	if (DEBUG_BUILD && IsKeyPressed(KEY_D)) {
 		showDebug = !showDebug;
 	}
@@ -110,8 +114,11 @@ void stateEnterGameplay(void)
 {
 	currentState = STATE_GAMEPLAY;
 
+	playerReset();
 	player.died = gameplayDied;
 	PlayMusicStream(music);
+
+	ghostPoolFreeAll();
 }
 
 void stateProcessGameplay(void)

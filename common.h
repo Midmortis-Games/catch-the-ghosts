@@ -7,13 +7,15 @@
 
 #define LOCAL_WIDTH 1000
 #define LOCAL_HEIGHT 750
-#define BACKGROUND_COLOR CLITERAL(Color){ 128, 128, 128, 255 }
+#define BACKGROUND_COLOR (CLITERAL(Color){ 128, 128, 128, 255 })
 
 #define FONT_SIZE_DEBUG 48
 #define FONT_SIZE_SCORE 96
 #define FONT_SIZE_TITLE 192
 #define FONT_SIZE_SUBTITLE 96
-#define FONT_SPACING -1
+#define FONT_SPACING (-1)
+
+#define MAX_DELTA 0.15
 
 #ifdef NDEBUG
 #define DEBUG_BUILD false

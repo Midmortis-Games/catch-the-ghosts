@@ -5,18 +5,51 @@
 
 #include "common.h"
 
+#include "game_state.c"
+
+void pressStartGame(void)
+{
+	stateExitStartScreen();
+	stateEnterGameplay();
+}
+
 void drawStartScreenUI(void)
 {
+	/* Text */
 	char *titleText = "Catch the Ghosts!";
 	char *playText = "[PLAY]";
 	Vector2 titleSize = MeasureTextMidmortis(titleText, FONT_SIZE_TITLE);
-	int playSize = MeasureTextMidmortis(playText, FONT_SIZE_SUBTITLE).x;
+	Vector2 playSize = MeasureTextMidmortis(playText, FONT_SIZE_SUBTITLE);
 	int titleX = LOCAL_WIDTH / 2 - (int)titleSize.x / 2;
 	int titleY = LOCAL_HEIGHT / 2 - (int)(titleSize.y / 1.5);
-	int playX = LOCAL_WIDTH / 2 - playSize / 2;
+	int playX = LOCAL_WIDTH / 2 - (int)playSize.x / 2;
 	int playY = LOCAL_HEIGHT / 2;
 	DrawTextMidmortis(titleText, titleX, titleY, FONT_SIZE_TITLE, LIGHTGRAY);
-	DrawTextMidmortis(playText, playX, playY, FONT_SIZE_SUBTITLE, LIGHTGRAY);
+
+	/* Button behavior */
+	Rectangle playButton = {
+		.x = playX,
+		.y = playY,
+		.width = playSize.x,
+		.height = playSize.y,
+	};
+	Color playColor = { 0 };
+        Vector2 position = GetMousePosition();
+        bool isHovering = CheckCollisionPointRec(position, playButton);
+	if (isHovering) {
+		playColor = GRAY;
+		SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
+
+		if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
+			pressStartGame();
+			return;
+		}
+	} else {
+		playColor = LIGHTGRAY;
+		SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+	}
+
+	DrawTextMidmortis(playText, playX, playY, FONT_SIZE_SUBTITLE, playColor);
 }
 
 void stateEnterStartScreen(void)
@@ -39,4 +72,6 @@ void stateProcessStartScreen(void)
 void stateExitStartScreen(void)
 {
 	assert(currentState == STATE_START_SCREEN);
+
+	SetMouseCursor(MOUSE_CURSOR_DEFAULT);
 }

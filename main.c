@@ -69,6 +69,26 @@ void createRenderTexture(void)
 	SetTextureFilter(targetBackup.texture, TEXTURE_FILTER_BILINEAR);
 }
 
+EM_BOOL OnBlur(int type, const EmscriptenFocusEvent *e, void *ud)
+{
+	(void)type;
+	(void)e;
+	(void)ud;
+
+	emscripten_pause_main_loop();
+	return EM_TRUE;
+}
+
+EM_BOOL OnFocus(int type, const EmscriptenFocusEvent *e, void *ud)
+{
+	(void)type;
+	(void)e;
+	(void)ud;
+
+	emscripten_resume_main_loop();
+	return EM_TRUE;
+}
+
 int main(void)
 {
 	SetRandomSeed((unsigned int)time(NULL));
@@ -81,6 +101,10 @@ int main(void)
 
 	loadAssets();
 	createRenderTexture();
+
+	const char *event = EMSCRIPTEN_EVENT_TARGET_WINDOW;
+	emscripten_set_blur_callback(event, NULL, 1, OnBlur);
+	emscripten_set_focus_callback(event, NULL, 1, OnFocus);
 
 	emscripten_set_main_loop(update, 0, true);
 }

@@ -5,16 +5,20 @@
 #include "common.h"
 #include "ghosts.c"
 
-#define BUCKET_HITBOX_SIZE (Vector2){ 157, 33 }
-#define BUCKET_HITBOX_OFFSET (Vector2){ -185, -118 }
+#define BUCKET_HITBOX_SIZE ((Vector2){ 157, 33 })
+#define BUCKET_HITBOX_OFFSET ((Vector2){ -185, -118 })
 #define BUCKET_HITBOX_COLOR GREEN
-#define PLAYER_SPRITE_OFFSET (Vector2){ -225, -154 }
-#define PLAYER_HITBOX_SIZE (Vector2){ 349, 231 }
-#define PLAYER_HITBOX_OFFSET (Vector2){ -173, -79 }
+#define PLAYER_SPRITE_OFFSET ((Vector2){ -225, -154 })
+#define PLAYER_HITBOX_SIZE ((Vector2){ 349, 231 })
+#define PLAYER_HITBOX_OFFSET ((Vector2){ -173, -79 })
 #define PLAYER_HITBOX_COLOR SKYBLUE
-#define PLAYER_Y_POSITION (600)
+#define PLAYER_Y_POSITION 600
 #define PLAYER_MAX_HEALTH 1
 #define PLAYER_MIN_HEALTH 0 /* dead when reached */
+#define PLAYER_DEFAULT_POSITION ((Vector2){	   \
+		.x = LOCAL_WIDTH / 2.0,	   \
+		.y = PLAYER_Y_POSITION,	   \
+	})
 
 struct Player {
 	void (*died)(void);
@@ -24,10 +28,7 @@ struct Player {
 	Texture2D texture;
 } player = {
 	.health = PLAYER_MAX_HEALTH,
-	.position = {
-		.x = LOCAL_WIDTH / 2.0,
-		.y = PLAYER_Y_POSITION,
-	},
+	.position = PLAYER_DEFAULT_POSITION,
 };
 
 Sound catchGhost;
@@ -130,4 +131,11 @@ void updatePhysicsPlayer(void)
 		/* Can only get hit once per frame */
 		hitByGhost();
 	}
+}
+
+void playerReset(void)
+{
+	player.position = PLAYER_DEFAULT_POSITION;
+	player.health = PLAYER_MAX_HEALTH;
+	player.score = 0;
 }

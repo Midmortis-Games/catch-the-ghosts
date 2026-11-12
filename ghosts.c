@@ -10,16 +10,16 @@
 #include "timer.h"
 
 #define GHOST_POOL_SIZE 16
-#define GHOST_HITBOX_SIZE (Vector2){ 64, 59 }
-#define GHOST_HITBOX_OFFSET (Vector2){ -31, -65 }
+#define GHOST_HITBOX_SIZE ((Vector2){ 64, 59 })
+#define GHOST_HITBOX_OFFSET ((Vector2){ -31, -65 })
 #define GHOST_HITBOX_COLOR PURPLE
-#define GHOST_SPRITE_OFFSET (Vector2){ -42, -172 }
-#define GHOST_RESPAWN_TIME (3)
-#define GHOST_SPAWN_POSITION_THRESHOLD (50)
+#define GHOST_SPRITE_OFFSET ((Vector2){ -42, -172 })
+#define GHOST_RESPAWN_TIME 3
+#define GHOST_SPAWN_POSITION_THRESHOLD 50
 #define GHOST_SPAWN_Y_POSITION (-10)
-#define GHOST_MIN_SPEED (100)
-#define GHOST_MAX_SPEED (300)
-#define GHOST_DIRECTION (Vector2){ 0, 1 }
+#define GHOST_MIN_SPEED 100
+#define GHOST_MAX_SPEED 300
+#define GHOST_DIRECTION ((Vector2){ 0, 1 })
 #define GHOST_TEXTURE_PATH ASSETS_DIR "/ghost.png"
 
 _Static_assert(
@@ -268,4 +268,19 @@ void updateGhostLogic(float delta)
 {
 	processTimer(&ghostRespawnTimer, delta);
 	ghostMap(ghostMove, &delta, sizeof(float));
+}
+
+void ghostPoolFreeAllInternal(struct Ghost *ghost, void *data, size_t size)
+{
+	(void)data;
+	(void)size;
+
+	assert(ghost != NULL);
+
+	ghostPoolFree(ghost);
+}
+
+void ghostPoolFreeAll(void)
+{
+	ghostMap(ghostPoolFreeAllInternal, NULL, 0);
 }
