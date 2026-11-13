@@ -22,6 +22,7 @@
 #define GHOST_MAX_SPEED 300
 #define GHOST_DIRECTION ((Vector2){ 0, 1 })
 #define GHOST_FRAME_DELAY 14
+#define SPLASH_HIT_FRAME_DELAY 9
 
 _Static_assert(
 	LOCAL_WIDTH > GHOST_SPAWN_POSITION_THRESHOLD * 4 + 1,
@@ -33,11 +34,15 @@ struct Ghost {
 	Vector2 direction;
 	float speed;
 	unsigned short animationTick;
+	bool dying;
 };
 
 int ghostFrameCount;
 Texture2D ghost1Texture;
 Texture2D ghost2Texture;
+Texture2D splashHit1Texture;
+Texture2D splashHit2Texture;
+Texture2D splashHit3Texture;
 struct Ghost ghostPool[GHOST_POOL_SIZE];
 struct Ghost *ghostFreeList[GHOST_POOL_SIZE];
 bool ghostUsedList[GHOST_POOL_SIZE];
@@ -79,18 +84,23 @@ void ghostKill(struct Ghost *ghost) {
 		return;
 	}
 
-	ghostPoolFree(ghost);
+	ghost->dying = true;
+	ghost->animationTick = 0;
 }
 
-void ghostTouched(struct Ghost *ghost, void *data, size_t size)
+bool ghostTryTouched(struct Ghost *ghost, void *data, size_t size)
 {
 	assert(ghost != NULL);
 	assert(data != NULL);
 	assert(size == sizeof(struct CollisionTest));
 
+	if (ghost->dying) {
+		return false;
+	}
+
 	if (ghost == NULL || data == NULL) {
 		errorf("Null exception, skipping ghost collision");
-		return;
+		return false;
 	}
 	if (size != sizeof(struct CollisionTest)) {
 		errorf(
@@ -98,7 +108,7 @@ void ghostTouched(struct Ghost *ghost, void *data, size_t size)
 			sizeof(struct CollisionTest),
 			size
 		);
-		return;
+		return false;
 	}
 
 	struct CollisionTest *ct = (struct CollisionTest *)data;
@@ -106,6 +116,22 @@ void ghostTouched(struct Ghost *ghost, void *data, size_t size)
 
 	if (CheckCollisionRecs(gc, ct->test)) {
 		ct->result = true;
+		return true;
+	}
+
+	return false;
+}
+
+void ghostTryCaught(struct Ghost *ghost, void *data, size_t size)
+{
+	if (ghostTryTouched(ghost, data, size)) {
+		ghostPoolFree(ghost);
+	}
+}
+
+void ghostTryHit(struct Ghost *ghost, void *data, size_t size)
+{
+	if (ghostTryTouched(ghost, data, size)) {
 		ghostKill(ghost);
 	}
 }
@@ -128,9 +154,23 @@ void ghostDraw(struct Ghost *ghost, void *data, size_t size)
 		return;
 	}
 
-	int frame = ghost->animationTick % (GHOST_FRAME_DELAY * 2)
-		< GHOST_FRAME_DELAY;
-	Texture2D ghostTexture = frame == 0 ? ghost1Texture : ghost2Texture;
+	Texture2D ghostTexture = { 0 };
+	if (!ghost->dying) {
+		int frame = ghost->animationTick % (GHOST_FRAME_DELAY * 2)
+			< GHOST_FRAME_DELAY;
+		ghostTexture = frame == 0 ? ghost1Texture : ghost2Texture;
+	} else {
+		if (ghost->animationTick < SPLASH_HIT_FRAME_DELAY) {
+			ghostTexture = splashHit1Texture;
+		} else if (ghost->animationTick < SPLASH_HIT_FRAME_DELAY * 2) {
+			ghostTexture = splashHit2Texture;
+		} else if (ghost->animationTick < SPLASH_HIT_FRAME_DELAY * 3) {
+			ghostTexture = splashHit3Texture;
+		} else {
+			ghostPoolFree(ghost);
+			return;
+		}
+	}
 
 	DrawTexture(
 		ghostTexture,
@@ -270,10 +310,12 @@ void ghostMove(struct Ghost *ghost, void *data, size_t size)
 
 	float delta = *(float*)data;
 
-	ghost->position = Vector2Add(
-		ghost->position,
-		Vector2Scale(ghost->direction, ghost->speed * delta)
-	);
+	if (!ghost->dying) {
+		ghost->position = Vector2Add(
+			ghost->position,
+			Vector2Scale(ghost->direction, ghost->speed * delta)
+			);
+	}
 	ghost->animationTick++;
 }
 

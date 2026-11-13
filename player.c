@@ -8,12 +8,14 @@
 #define BUCKET_HITBOX_SIZE ((Vector2){ 157, 33 })
 #define BUCKET_HITBOX_OFFSET ((Vector2){ -185, -80 })
 #define BUCKET_HITBOX_COLOR (CLITERAL(Color){ 0, 228, 48, 255 / 2 })
+#define SPLASH_SCORE_OFFSET ((Vector2){ -158, -248 })
+#define SPLASH_HIT_FRAME_DELAY 9
 #define PLAYER_SPRITE_OFFSET ((Vector2){ -225, -154 })
 #define PLAYER_HITBOX_SIZE ((Vector2){ 349, 231 })
 #define PLAYER_HITBOX_OFFSET ((Vector2){ -173, -47 })
 #define PLAYER_HITBOX_COLOR (CLITERAL(Color){ 102, 191, 255, 255 / 2 })
 #define PLAYER_Y_POSITION 600
-#define PLAYER_MAX_HEALTH 1
+#define PLAYER_MAX_HEALTH 3
 #define PLAYER_MIN_HEALTH 0 /* dead when reached */
 #define PLAYER_DEFAULT_POSITION ((Vector2){	   \
 		.x = LOCAL_WIDTH / 2.0,	   \
@@ -34,6 +36,8 @@ struct Player {
 	Vector2 position;
 	unsigned int score;
 	unsigned int health;
+	unsigned short scoreAnimationTick;
+	bool scoring;
 } player = {
 	.health = PLAYER_MAX_HEALTH,
 	.position = PLAYER_DEFAULT_POSITION,
@@ -41,8 +45,37 @@ struct Player {
 
 Sound catchGhost;
 
+void drawSplashHit(void)
+{
+	if (!player.scoring) {
+		return;
+	}
+
+	Texture2D splashTexture = { 0 };
+	if (player.scoreAnimationTick < SPLASH_HIT_FRAME_DELAY) {
+		splashTexture = splashScore1Texture;
+	} else if (player.scoreAnimationTick < SPLASH_HIT_FRAME_DELAY * 2) {
+		splashTexture = splashScore2Texture;
+	} else if (player.scoreAnimationTick < SPLASH_HIT_FRAME_DELAY * 3) {
+		splashTexture = splashScore3Texture;
+	} else {
+		player.scoring = false;
+		player.scoreAnimationTick = 0;
+		return;
+	}
+
+	DrawTexture(
+		splashTexture,
+		player.position.x + SPLASH_SCORE_OFFSET.x,
+		player.position.y + SPLASH_SCORE_OFFSET.y,
+		WHITE
+	);
+}
+
 void drawPlayer(void)
 {
+	drawSplashHit();
+
 	Texture2D playerTexture = { 0 };
 	switch (player.health) {
 	default:
@@ -96,11 +129,13 @@ void updatePlayerLogic(float delta)
 
 	player.position.y = PLAYER_Y_POSITION;
 	player.position.x = GetMouseX();
+	player.scoreAnimationTick += player.scoring;
 }
 
 void caughtGhost(void)
 {
 	player.score++;
+	player.scoring = true;
 	PlaySound(catchGhost);
 }
 
@@ -140,7 +175,7 @@ void updatePhysicsBucket(void)
 {
 	Rectangle bucketCollisionBox = getBucketCollisionBox();
 	struct CollisionTest ct = { .test = bucketCollisionBox };
-	ghostMap(ghostTouched, &ct, sizeof(struct CollisionTest));
+	ghostMap(ghostTryCaught, &ct, sizeof(struct CollisionTest));
 	if (ct.result) {
 		/* Can only catch one ghost per frame */
 		caughtGhost();
@@ -151,7 +186,7 @@ void updatePhysicsPlayer(void)
 {
 	Rectangle playerCollisionBox = getPlayerCollisionBox();
 	struct CollisionTest ct = { .test = playerCollisionBox };
-	ghostMap(ghostTouched, &ct, sizeof(struct CollisionTest));
+	ghostMap(ghostTryHit, &ct, sizeof(struct CollisionTest));
 	if (ct.result) {
 		/* Can only get hit once per frame */
 		hitByGhost();

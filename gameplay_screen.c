@@ -14,9 +14,6 @@
 
 Music music;
 Texture2D backgroundTexture;
-Texture2D splashHit1Texture;
-Texture2D splashHit2Texture;
-Texture2D splashHit3Texture;
 
 void drawDebugGameplayUI(void)
 {
@@ -82,7 +79,7 @@ void updatePhysicsFloor(void)
 {
 	Rectangle floor = getFloorCollisionBox();
 	struct CollisionTest ct = { .test = floor };
-	ghostMap(ghostTouched, &ct, sizeof(struct CollisionTest));
+	ghostMap(ghostTryHit, &ct, sizeof(struct CollisionTest));
 	if (ct.result) {
 		PlaySound(splash);
 	}
