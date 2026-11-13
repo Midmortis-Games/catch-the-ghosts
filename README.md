@@ -1,6 +1,6 @@
 ## Commits Of Dependencies
 
-- `libraylib.a`: `4bfb72d8ff46b74ec8e5c745364406c4f153929f` (option 
+- `libraylib.a`: `4bfb72d8ff46b74ec8e5c745364406c4f153929f`
 - `emsdk`: `d7b4130688bfa348392b921ab04015aa15c4f154`
 
 ## How To Build (Linux Only)
