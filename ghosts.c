@@ -93,7 +93,11 @@ void ghostTouched(struct Ghost *ghost, void *data, size_t size)
 		return;
 	}
 	if (size != sizeof(struct CollisionTest)) {
-		errorf("Expected payload size %zu: got %zu", sizeof(float), size);
+		errorf(
+			"Expected payload size %zu: got %zu",
+			sizeof(struct CollisionTest),
+			size
+		);
 		return;
 	}
 

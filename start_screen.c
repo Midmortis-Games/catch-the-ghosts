@@ -35,8 +35,8 @@ void drawStartScreenUI(void)
 		.height = playSize.y,
 	};
 	Color playColor = { 0 };
-        Vector2 position = GetMousePosition();
-        bool isHovering = CheckCollisionPointRec(position, playButton);
+	Vector2 position = GetMousePosition();
+	bool isHovering = CheckCollisionPointRec(position, playButton);
 	if (isHovering) {
 		playColor = DARKGRAY;
 		SetMouseCursor(MOUSE_CURSOR_POINTING_HAND);
