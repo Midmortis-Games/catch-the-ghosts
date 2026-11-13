@@ -15,6 +15,7 @@
 #define FONT_SIZE_TITLE 192
 #define FONT_SIZE_SUBTITLE 96
 #define FONT_SPACING (-1)
+#define FONT_COLOR WHITE
 
 #define MAX_DELTA 0.15
 

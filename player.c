@@ -13,7 +13,7 @@
 #define PLAYER_HITBOX_OFFSET ((Vector2){ -173, -47 })
 #define PLAYER_HITBOX_COLOR (CLITERAL(Color){ 102, 191, 255, 255 / 2 })
 #define PLAYER_Y_POSITION 600
-#define PLAYER_MAX_HEALTH 3
+#define PLAYER_MAX_HEALTH 1
 #define PLAYER_MIN_HEALTH 0 /* dead when reached */
 #define PLAYER_DEFAULT_POSITION ((Vector2){	   \
 		.x = LOCAL_WIDTH / 2.0,	   \

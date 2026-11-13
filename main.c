@@ -12,6 +12,7 @@
 #include "ghosts.c"
 #include "timer.c"
 #include "game_state.c"
+#include "button.c"
 
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
@@ -46,8 +47,6 @@
 bool showDebug = false;
 
 RenderTexture2D target;
-Texture2D buttonOnTexture;
-Texture2D buttonOffTexture;
 Font font;
 
 void update(void);

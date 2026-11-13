@@ -27,9 +27,9 @@ void drawDebugGameplayUI(void)
 		0,
 		0,
 		FONT_SIZE_DEBUG,
-		LIGHTGRAY
+		FONT_COLOR
 	);
-	DrawTextMidmortis(fps, 0, FONT_SIZE_DEBUG, FONT_SIZE_DEBUG, LIGHTGRAY);
+	DrawTextMidmortis(fps, 0, FONT_SIZE_DEBUG, FONT_SIZE_DEBUG, FONT_COLOR);
 }
 
 void gameplayDrawUI(void)
@@ -48,7 +48,7 @@ void gameplayDrawUI(void)
 		assert(x >= 0);
 	}
 	int y = FONT_SIZE_SCORE + 10;
-	DrawTextMidmortis(scoreText, x, y, FONT_SIZE_SCORE, LIGHTGRAY);
+	DrawTextMidmortis(scoreText, x, y, FONT_SIZE_SCORE, FONT_COLOR);
 }
 
 void gameplayDraw(void)
