@@ -6,6 +6,7 @@
 #include "common.h"
 
 STATE currentState = STATE_START_SCREEN;
+bool stateChangeNextFrame = true;
 
 void stateEnterStartScreen(void);
 void stateProcessStartScreen(void);
@@ -64,17 +65,21 @@ void _stateAssertInit(void)
 
 void stateChange(STATE newState)
 {
-	assert(newState >= STATE_START && newState < _STATE_LAST);
+	assert(newState > _STATE_FIRST && newState < _STATE_LAST);
 	assert(newState != currentState);
 
 	exitFunctions[currentState]();
 	currentState = newState;
-	enterFunctions[newState]();
+	stateChangeNextFrame = true;
 }
 
 void stateUpdate(void)
 {
-	assert(currentState >= STATE_START && currentState < _STATE_LAST);
+	assert(currentState > _STATE_FIRST && currentState < _STATE_LAST);
 
+	if (stateChangeNextFrame) {
+		enterFunctions[currentState]();
+		stateChangeNextFrame = false;
+	}
 	processFunctions[currentState]();
 }

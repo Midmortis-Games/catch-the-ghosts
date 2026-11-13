@@ -7,6 +7,8 @@
 
 #include "game_state.c"
 
+Texture2D titleScreenTexture;
+
 void pressStartGame(void)
 {
 	stateChange(STATE_GAMEPLAY);
@@ -59,7 +61,7 @@ void stateProcessStartScreen(void)
 
 	BeginTextureMode(target);
 	{
-		ClearBackground(BACKGROUND_COLOR);
+		DrawTexture(titleScreenTexture, 0, 0, WHITE);
 		drawStartScreenUI();
 	}
 	EndTextureMode();

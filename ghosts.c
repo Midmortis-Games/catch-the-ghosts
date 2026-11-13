@@ -12,8 +12,8 @@
 
 #define GHOST_POOL_SIZE 16
 #define GHOST_HITBOX_SIZE ((Vector2){ 64, 59 })
-#define GHOST_HITBOX_OFFSET ((Vector2){ -31, -65 })
-#define GHOST_HITBOX_COLOR PURPLE
+#define GHOST_HITBOX_OFFSET ((Vector2){ -31, -70 })
+#define GHOST_HITBOX_COLOR (CLITERAL(Color){ 200, 122, 255, 255 / 2 })
 #define GHOST_SPRITE_OFFSET ((Vector2){ -42, -172 })
 #define GHOST_RESPAWN_TIME 3
 #define GHOST_SPAWN_POSITION_THRESHOLD 50
@@ -21,7 +21,7 @@
 #define GHOST_MIN_SPEED 100
 #define GHOST_MAX_SPEED 300
 #define GHOST_DIRECTION ((Vector2){ 0, 1 })
-#define GHOST_TEXTURE_PATH ASSETS_DIR "/ghost.png"
+#define GHOST_FRAME_DELAY 14
 
 _Static_assert(
 	LOCAL_WIDTH > GHOST_SPAWN_POSITION_THRESHOLD * 4 + 1,
@@ -32,9 +32,12 @@ struct Ghost {
 	Vector2 position;
 	Vector2 direction;
 	float speed;
+	unsigned short animationTick;
 };
 
-Texture2D ghostTexture;
+int ghostFrameCount;
+Texture2D ghost1Texture;
+Texture2D ghost2Texture;
 struct Ghost ghostPool[GHOST_POOL_SIZE];
 struct Ghost *ghostFreeList[GHOST_POOL_SIZE];
 bool ghostUsedList[GHOST_POOL_SIZE];
@@ -120,6 +123,10 @@ void ghostDraw(struct Ghost *ghost, void *data, size_t size)
 		errorf("Ghost is null, ignoring");
 		return;
 	}
+
+	int frame = ghost->animationTick % (GHOST_FRAME_DELAY * 2)
+		< GHOST_FRAME_DELAY;
+	Texture2D ghostTexture = frame == 0 ? ghost1Texture : ghost2Texture;
 
 	DrawTexture(
 		ghostTexture,
@@ -263,6 +270,7 @@ void ghostMove(struct Ghost *ghost, void *data, size_t size)
 		ghost->position,
 		Vector2Scale(ghost->direction, ghost->speed * delta)
 	);
+	ghost->animationTick++;
 }
 
 void updateGhostLogic(float delta)

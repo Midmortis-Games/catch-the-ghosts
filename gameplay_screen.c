@@ -13,6 +13,10 @@
 #define FLOOR_HITBOX_POSITION ((Vector2){ 0, LOCAL_HEIGHT })
 
 Music music;
+Texture2D backgroundTexture;
+Texture2D splashHit1Texture;
+Texture2D splashHit2Texture;
+Texture2D splashHit3Texture;
 
 void drawDebugGameplayUI(void)
 {
@@ -49,7 +53,7 @@ void gameplayDrawUI(void)
 
 void gameplayDraw(void)
 {
-	ClearBackground(BACKGROUND_COLOR);
+	DrawTexture(backgroundTexture, 0, 0, WHITE);
 
 	drawGhosts();
 	drawPlayer();

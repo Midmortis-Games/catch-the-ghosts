@@ -6,26 +6,34 @@
 #include "ghosts.c"
 
 #define BUCKET_HITBOX_SIZE ((Vector2){ 157, 33 })
-#define BUCKET_HITBOX_OFFSET ((Vector2){ -185, -118 })
-#define BUCKET_HITBOX_COLOR GREEN
+#define BUCKET_HITBOX_OFFSET ((Vector2){ -185, -80 })
+#define BUCKET_HITBOX_COLOR (CLITERAL(Color){ 0, 228, 48, 255 / 2 })
 #define PLAYER_SPRITE_OFFSET ((Vector2){ -225, -154 })
 #define PLAYER_HITBOX_SIZE ((Vector2){ 349, 231 })
-#define PLAYER_HITBOX_OFFSET ((Vector2){ -173, -79 })
-#define PLAYER_HITBOX_COLOR SKYBLUE
+#define PLAYER_HITBOX_OFFSET ((Vector2){ -173, -47 })
+#define PLAYER_HITBOX_COLOR (CLITERAL(Color){ 102, 191, 255, 255 / 2 })
 #define PLAYER_Y_POSITION 600
-#define PLAYER_MAX_HEALTH 1
+#define PLAYER_MAX_HEALTH 3
 #define PLAYER_MIN_HEALTH 0 /* dead when reached */
 #define PLAYER_DEFAULT_POSITION ((Vector2){	   \
 		.x = LOCAL_WIDTH / 2.0,	   \
 		.y = PLAYER_Y_POSITION,	   \
 	})
 
+Texture2D playerTexture3;
+Texture2D playerTexture2;
+Texture2D playerTexture1;
+Texture2D playerTexture0;
+
+Texture2D splashScore1Texture;
+Texture2D splashScore2Texture;
+Texture2D splashScore3Texture;
+
 struct Player {
 	void (*died)(void);
 	Vector2 position;
 	unsigned int score;
 	unsigned int health;
-	Texture2D texture;
 } player = {
 	.health = PLAYER_MAX_HEALTH,
 	.position = PLAYER_DEFAULT_POSITION,
@@ -35,8 +43,25 @@ Sound catchGhost;
 
 void drawPlayer(void)
 {
+	Texture2D playerTexture = { 0 };
+	switch (player.health) {
+	default:
+	case 3:
+		playerTexture = playerTexture3;
+		break;
+	case 2:
+		playerTexture = playerTexture2;
+		break;
+	case 1:
+		playerTexture = playerTexture1;
+		break;
+	case 0:
+		playerTexture = playerTexture0;
+		break;
+	}
+
 	DrawTexture(
-		player.texture,
+		playerTexture,
 		player.position.x + PLAYER_SPRITE_OFFSET.x,
 		player.position.y + PLAYER_SPRITE_OFFSET.y,
 		WHITE

@@ -25,7 +25,7 @@
 #endif
 
 #define ASSETS_DIR "assets"
-#define DEBUG_POSITION_COLOR ORANGE
+#define DEBUG_POSITION_COLOR (CLITERAL(Color){ 255, 161, 0, 255 / 2 })
 #define DEBUG_POSITION_RADIUS 20
 
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]) + \
