@@ -8,6 +8,7 @@
 #include "game_state.c"
 #include "button.c"
 
+Music titleScreenMusic;
 Texture2D titleScreenTexture;
 
 void pressStartGame(void)
@@ -23,11 +24,18 @@ void drawStartScreenUI(void)
 	drawButton((Vector2){ playX, playY }, pressStartGame);
 }
 
-void stateEnterStartScreen(void) {}
+void stateEnterStartScreen(void)
+{
+	assert(currentMusic == NULL);
+	PlayMusicStream(titleScreenMusic);
+	currentMusic = &titleScreenMusic;
+}
 
 void stateProcessStartScreen(void)
 {
 	assert(currentState == STATE_START_SCREEN);
+
+	UpdateMusicStream(titleScreenMusic);
 
 	BeginTextureMode(target);
 	{
@@ -42,4 +50,5 @@ void stateExitStartScreen(void)
 	assert(currentState == STATE_START_SCREEN);
 
 	SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+	StopMusicStream(titleScreenMusic);
 }

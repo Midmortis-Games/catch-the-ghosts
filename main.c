@@ -38,7 +38,10 @@
 #define TITLE_SCREEN_TEXTURE_PATH ASSETS_DIR "/title_screen.png"
 #define BACKGROUND_TEXTURE_PATH ASSETS_DIR "/background.png"
 #define FONT_PATH ASSETS_DIR "/LakkiReddy-Regular.ttf"
-#define MUSIC_PATH ASSETS_DIR "/music.ogg"
+#define TITLE_SCREEN_MUSIC_PATH ASSETS_DIR "/music/title_music.ogg"
+#define GAMEPLAY_START_MUSIC_PATH ASSETS_DIR "/music/gameplay_start.ogg"
+#define GAMEPLAY_MUSIC_PATH ASSETS_DIR "/music/gameplay_music.ogg"
+#define DEATH_MUSIC_PATH ASSETS_DIR "/music/death_music.ogg"
 #define SOUND_CATCH_GHOST_PATH ASSETS_DIR "/catch_ghost.ogg"
 #define SOUND_SPLASH_PATH ASSETS_DIR "/splash.ogg"
 
@@ -46,6 +49,7 @@
 
 bool showDebug = false;
 
+Music *currentMusic;
 RenderTexture2D target;
 Font font;
 
@@ -70,7 +74,10 @@ void loadAssets(void)
 	titleScreenTexture = LoadTexture(TITLE_SCREEN_TEXTURE_PATH);
 	backgroundTexture = LoadTexture(BACKGROUND_TEXTURE_PATH);
 	font = LoadFontEx(FONT_PATH, FONT_SIZE_TITLE, NULL, 0);
-	music = LoadMusicStream(MUSIC_PATH);
+	titleScreenMusic = LoadMusicStream(TITLE_SCREEN_MUSIC_PATH);
+	gameplayMusic = LoadMusicStream(GAMEPLAY_MUSIC_PATH);
+	gameplayStartMusic = LoadMusicStream(GAMEPLAY_START_MUSIC_PATH);
+	deathMusic = LoadMusicStream(DEATH_MUSIC_PATH);
 	catchGhost = LoadSound(SOUND_CATCH_GHOST_PATH);
 	splash = LoadSound(SOUND_SPLASH_PATH);
 
@@ -91,7 +98,10 @@ void loadAssets(void)
 	assert(IsTextureValid(backgroundTexture));
 	assert(IsTextureValid(titleScreenTexture));
 	assert(IsFontValid(font));
-	assert(IsMusicValid(music));
+	assert(IsMusicValid(titleScreenMusic));
+	assert(IsMusicValid(gameplayMusic));
+	assert(IsMusicValid(gameplayStartMusic));
+	assert(IsMusicValid(deathMusic));
 	assert(IsSoundValid(catchGhost));
 	assert(IsSoundValid(splash));
 

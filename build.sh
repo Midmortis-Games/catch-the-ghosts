@@ -81,5 +81,6 @@ emcc -MJ compile_commands.part -c $SOURCE.c $FLAGS &&
 	     --shell-file shell.html \
 	     -s USE_GLFW=3 \
 	     --preload-file assets \
+	     --exclude-file "*.txt" \
 	     -lm
     }

@@ -7,6 +7,7 @@
 #include "game_state.c"
 #include "button.c"
 
+Music deathMusic;
 RenderTexture2D targetBackup;
 
 void pressRestartGame(void)
@@ -38,6 +39,10 @@ void drawDeathScreenUI(void)
 
 void stateEnterDeath(void)
 {
+	deathMusic.looping = false;
+	PlayMusicStream(deathMusic);
+	currentMusic = &deathMusic;
+
 	BeginTextureMode(targetBackup);
 	{
 		DrawRenderTexture(target);
@@ -48,6 +53,8 @@ void stateEnterDeath(void)
 void stateProcessDeath(void)
 {
 	assert(currentState == STATE_DEATH);
+
+	UpdateMusicStream(deathMusic);
 
 	BeginTextureMode(target);
 	{
@@ -62,4 +69,5 @@ void stateExitDeath(void)
 	assert(currentState == STATE_DEATH);
 
 	SetMouseCursor(MOUSE_CURSOR_DEFAULT);
+	StopMusicStream(deathMusic);
 }

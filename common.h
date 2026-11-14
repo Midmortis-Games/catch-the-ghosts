@@ -49,6 +49,7 @@ struct CollisionTest {
 extern bool showDebug;
 extern STATE currentState;
 extern RenderTexture2D target;
+extern Music *currentMusic;
 
 int errorf(const char *restrict format, ...);
 Vector2 MeasureTextMidmortis(const char *text, float fontSize);

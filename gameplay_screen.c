@@ -12,7 +12,8 @@
 #define FLOOR_HITBOX_SIZE ((Vector2){ LOCAL_WIDTH, 10 })
 #define FLOOR_HITBOX_POSITION ((Vector2){ 0, LOCAL_HEIGHT })
 
-Music music;
+Music gameplayMusic; /* Loops */
+Music gameplayStartMusic; /* Doesn't loop */
 Texture2D backgroundTexture;
 
 void drawDebugGameplayUI(void)
@@ -94,7 +95,7 @@ void updatePhysics(float delta)
 	updatePhysicsFloor();
 }
 
-void updateLogic(void)
+void updateGameplayLogic(void)
 {
 	float delta = GetFrameTime();
 	assert(isfinite(delta));
@@ -121,17 +122,37 @@ void stateEnterGameplay(void)
 	timerReset(&ghostRespawnTimer);
 	playerReset();
 	player.died = gameplayDied;
-	PlayMusicStream(music);
+
+	gameplayStartMusic.looping = false;
+	gameplayMusic.looping = true;
+
+	PlayMusicStream(gameplayStartMusic);
+	currentMusic = &gameplayStartMusic;
 
 	ghostPoolFreeAll();
+}
+
+void updateGameplayMusic(void)
+{
+	UpdateMusicStream(*currentMusic);
+
+	if (currentMusic != &gameplayStartMusic) {
+		return;
+	}
+
+	if (!IsMusicStreamPlaying(gameplayStartMusic)) {
+		StopMusicStream(gameplayStartMusic);
+		PlayMusicStream(gameplayMusic);
+		currentMusic = &gameplayMusic;
+	}
 }
 
 void stateProcessGameplay(void)
 {
 	assert(currentState == STATE_GAMEPLAY);
 
-	updateLogic();
-	UpdateMusicStream(music);
+	updateGameplayLogic();
+	updateGameplayMusic();
 
 	BeginTextureMode(target);
 	{
@@ -144,5 +165,5 @@ void stateExitGameplay(void)
 {
 	assert(currentState == STATE_GAMEPLAY);
 
-	StopMusicStream(music);
+	StopMusicStream(*currentMusic);
 }
