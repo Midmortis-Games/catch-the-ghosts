@@ -270,3 +270,14 @@ void DrawRenderTexture(RenderTexture2D tex)
 		WHITE
 	);
 }
+
+bool chance(float percentage)
+{
+	assert(isfinite(percentage));
+	assert(percentage >= 0.0f && percentage <= 1.0f);
+
+	const int min = 1;
+	const int max = 1000000;
+	float rand = (float)GetRandomValue(min, max);
+	return rand / (float)max <= percentage;
+}

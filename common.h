@@ -61,3 +61,4 @@ void DrawTextMidmortis(
 	Color color
 );
 void DrawRenderTexture(RenderTexture2D tex);
+bool chance(float percentage);

@@ -10,16 +10,19 @@
 
 #include "timer.c"
 
-#define GHOST_POOL_SIZE 16
+#define GHOST_POOL_SIZE 32
 #define GHOST_HITBOX_SIZE ((Vector2){ 64, 59 })
 #define GHOST_HITBOX_OFFSET ((Vector2){ -31, -70 })
 #define GHOST_HITBOX_COLOR (CLITERAL(Color){ 200, 122, 255, 255 / 2 })
 #define GHOST_SPRITE_OFFSET ((Vector2){ -42, -172 })
-#define GHOST_RESPAWN_TIME 3
+#define GHOST_MAX_RESPAWN_TIME 3.0f
+#define GHOST_MIN_RESPAWN_TIME 1.33f
+#define GHOST_RESPAWN_TIME_DECREASE_PER_SCORE 0.03f
+#define GHOST_SPAWN_2_CHANCE 0.2f
 #define GHOST_SPAWN_POSITION_THRESHOLD 50
 #define GHOST_SPAWN_Y_POSITION (-10)
-#define GHOST_MIN_SPEED 100
-#define GHOST_MAX_SPEED 300
+#define GHOST_MIN_SPEED 100.0f
+#define GHOST_MAX_SPEED 300.0f
 #define GHOST_DIRECTION ((Vector2){ 0, 1 })
 #define GHOST_FRAME_DELAY 14
 #define SPLASH_HIT_FRAME_DELAY 9
@@ -53,6 +56,8 @@ struct Timer ghostRespawnTimer;
 
 void ghostPoolFree(struct Ghost *ghost);
 struct Ghost *ghostPoolAlloc(void);
+
+extern unsigned int score;
 
 void ghostMap(
 	void (*callback)(struct Ghost *ghost, void *data, size_t size),
@@ -268,13 +273,8 @@ void ghostPoolFree(struct Ghost *ghost)
 	ghostFreeCount++;
 }
 
-void spawnGhost(void)
+void spawnGhostInternal(void)
 {
-	if (ghostFreeCount <= 0) {
-		errorf("Warning: no free ghost slot to use");
-		return;
-	}
-
 	struct Ghost *ghost = ghostPoolAlloc();
 	ghost->speed = GetRandomValue(GHOST_MIN_SPEED, GHOST_MAX_SPEED);
 	ghost->direction = GHOST_DIRECTION;
@@ -282,6 +282,31 @@ void spawnGhost(void)
 		getGhostSpawnXPosition(),
 		GHOST_SPAWN_Y_POSITION
 	};
+}
+
+float getGhostRespawnSpeed(void)
+{
+	float decrease = score * GHOST_RESPAWN_TIME_DECREASE_PER_SCORE;
+	float speed = GHOST_MAX_RESPAWN_TIME - decrease;
+	if (speed < GHOST_MIN_RESPAWN_TIME) {
+		speed = GHOST_MIN_RESPAWN_TIME;
+	}
+	return speed;
+}
+
+void spawnGhost(void)
+{
+	if (ghostFreeCount <= 0) {
+		errorf("Warning: no free ghost slot to use");
+		return;
+	}
+
+	spawnGhostInternal();
+	if (chance(GHOST_SPAWN_2_CHANCE)) {
+		spawnGhostInternal();
+	}
+
+	ghostRespawnTimer.waitTime = getGhostRespawnSpeed();
 }
 
 void ghostPoolInit(void)
@@ -296,7 +321,8 @@ __attribute__((constructor))
 void ghostLogicInit(void)
 {
 	ghostPoolInit();
-	ghostRespawnTimer = timerCreate(GHOST_RESPAWN_TIME, spawnGhost, true);
+	ghostRespawnTimer
+		= timerCreate(GHOST_MAX_RESPAWN_TIME, spawnGhost, true);
 }
 
 void ghostMove(struct Ghost *ghost, void *data, size_t size)

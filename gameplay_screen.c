@@ -39,7 +39,7 @@ void gameplayDrawUI(void)
 	}
 
 	char scoreText[32] = { 0 };
-	snprintf(scoreText, ARRAY_SIZE(scoreText), "Score: %u", player.score);
+	snprintf(scoreText, ARRAY_SIZE(scoreText), "Score: %u", score);
 	int textSize = MeasureTextMidmortis(scoreText, FONT_SIZE_SCORE).x;
 	if (x < 0) {
 		x = LOCAL_WIDTH / 2 - textSize / 2;
@@ -83,6 +83,9 @@ void updatePhysicsFloor(void)
 	ghostMap(ghostTryHit, &ct, sizeof(struct CollisionTest));
 	if (ct.result) {
 		PlaySound(splash);
+		if (score > 0) {
+			score--;
+		}
 	}
 }
 

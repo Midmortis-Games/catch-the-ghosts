@@ -31,10 +31,11 @@ Texture2D splashScore1Texture;
 Texture2D splashScore2Texture;
 Texture2D splashScore3Texture;
 
+unsigned int score;
+
 struct Player {
 	void (*died)(void);
 	Vector2 position;
-	unsigned int score;
 	unsigned int health;
 	unsigned short scoreAnimationTick;
 	bool scoring;
@@ -134,8 +135,9 @@ void updatePlayerLogic(float delta)
 
 void caughtGhost(void)
 {
-	player.score++;
+	score++;
 	player.scoring = true;
+	player.scoreAnimationTick = 0;
 	PlaySound(catchGhost);
 }
 
@@ -197,5 +199,5 @@ void playerReset(void)
 {
 	player.position = PLAYER_DEFAULT_POSITION;
 	player.health = PLAYER_MAX_HEALTH;
-	player.score = 0;
+	score = 0;
 }
